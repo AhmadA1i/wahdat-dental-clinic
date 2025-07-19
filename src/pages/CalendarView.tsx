@@ -1,38 +1,106 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Clock, User, CalendarDays } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 import 'react-calendar/dist/Calendar.css';
 
 interface CalendarAppointment {
-  id: number;
-  patientName: string;
-  service: string;
-  time: string;
-  doctor: string;
-  status: 'confirmed' | 'pending' | 'completed';
+  id: string;
+  patient_name: string;
+  treatment_name: string;
+  preferred_time: string;
+  status: string;
+  preferred_date: string;
 }
 
 const CalendarView = () => {
+  const { toast } = useToast();
   const [date, setDate] = useState(new Date());
-  
-  // Sample appointments data
-  const appointments: { [key: string]: CalendarAppointment[] } = {
-    '2024-01-20': [
-      { id: 1, patientName: 'Sarah Johnson', service: 'Cleaning', time: '10:00 AM', doctor: 'Dr. Johnson', status: 'confirmed' },
-      { id: 2, patientName: 'Michael Brown', service: 'Root Canal', time: '2:30 PM', doctor: 'Dr. Smith', status: 'pending' },
-      { id: 3, patientName: 'Emma Davis', service: 'Checkup', time: '4:00 PM', doctor: 'Dr. Johnson', status: 'confirmed' }
-    ],
-    '2024-01-21': [
-      { id: 4, patientName: 'James Wilson', service: 'Filling', time: '9:00 AM', doctor: 'Dr. Brown', status: 'confirmed' },
-      { id: 5, patientName: 'Lisa Taylor', service: 'Whitening', time: '11:30 AM', doctor: 'Dr. Johnson', status: 'pending' }
-    ],
-    '2024-01-22': [
-      { id: 6, patientName: 'Robert Davis', service: 'Surgery', time: '1:00 PM', doctor: 'Dr. Smith', status: 'confirmed' }
-    ]
+  const [appointments, setAppointments] = useState<{ [key: string]: CalendarAppointment[] }>({});
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    thisWeek: 0,
+    confirmed: 0,
+    pending: 0,
+    cancelled: 0
+  });
+
+  const fetchAppointments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('*')
+        .order('preferred_time');
+
+      if (error) throw error;
+
+      // Group appointments by date
+      const groupedAppointments: { [key: string]: CalendarAppointment[] } = {};
+      let thisWeekCount = 0;
+      let confirmedCount = 0;
+      let pendingCount = 0;
+      let cancelledCount = 0;
+
+      const today = new Date();
+      const thisWeekStart = new Date(today);
+      thisWeekStart.setDate(today.getDate() - today.getDay());
+      const thisWeekEnd = new Date(thisWeekStart);
+      thisWeekEnd.setDate(thisWeekStart.getDate() + 6);
+
+      data?.forEach((appointment) => {
+        const dateKey = appointment.preferred_date;
+        if (!groupedAppointments[dateKey]) {
+          groupedAppointments[dateKey] = [];
+        }
+        groupedAppointments[dateKey].push(appointment);
+
+        // Calculate stats
+        const appointmentDate = new Date(appointment.preferred_date);
+        if (appointmentDate >= thisWeekStart && appointmentDate <= thisWeekEnd) {
+          thisWeekCount++;
+        }
+
+        switch (appointment.status) {
+          case 'approved':
+          case 'completed':
+            confirmedCount++;
+            break;
+          case 'pending':
+            pendingCount++;
+            break;
+          case 'cancelled':
+          case 'rejected':
+            cancelledCount++;
+            break;
+        }
+      });
+
+      setAppointments(groupedAppointments);
+      setStats({
+        thisWeek: thisWeekCount,
+        confirmed: confirmedCount,
+        pending: pendingCount,
+        cancelled: cancelledCount
+      });
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load appointments",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
 
   const formatDate = (date: Date) => {
     return date.toISOString().split('T')[0];
@@ -43,9 +111,11 @@ const CalendarView = () => {
 
   const getStatusColor = (status: string) => {
     const colors = {
-      confirmed: 'bg-green-100 text-green-800',
+      approved: 'bg-green-100 text-green-800',
       pending: 'bg-yellow-100 text-yellow-800',
-      completed: 'bg-blue-100 text-blue-800'
+      completed: 'bg-blue-100 text-blue-800',
+      cancelled: 'bg-red-100 text-red-800',
+      rejected: 'bg-red-100 text-red-800'
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
@@ -64,6 +134,17 @@ const CalendarView = () => {
     }
     return null;
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading calendar...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -112,8 +193,8 @@ const CalendarView = () => {
                     <div key={appointment.id} className="border rounded-lg p-4 space-y-2">
                       <div className="flex justify-between items-start">
                         <div>
-                          <h4 className="font-medium">{appointment.patientName}</h4>
-                          <p className="text-sm text-muted-foreground">{appointment.service}</p>
+                          <h4 className="font-medium">{appointment.patient_name}</h4>
+                          <p className="text-sm text-muted-foreground">{appointment.treatment_name}</p>
                         </div>
                         <Badge className={getStatusColor(appointment.status)}>
                           {appointment.status}
@@ -121,11 +202,7 @@ const CalendarView = () => {
                       </div>
                       <div className="flex items-center text-sm text-muted-foreground">
                         <Clock className="h-3 w-3 mr-1" />
-                        {appointment.time}
-                      </div>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <User className="h-3 w-3 mr-1" />
-                        {appointment.doctor}
+                        {appointment.preferred_time}
                       </div>
                     </div>
                   ))}
@@ -149,25 +226,25 @@ const CalendarView = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
-            <h3 className="text-2xl font-bold text-primary">24</h3>
+            <h3 className="text-2xl font-bold text-primary">{stats.thisWeek}</h3>
             <p className="text-sm text-muted-foreground">This Week</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <h3 className="text-2xl font-bold text-medical-success">18</h3>
+            <h3 className="text-2xl font-bold text-medical-success">{stats.confirmed}</h3>
             <p className="text-sm text-muted-foreground">Confirmed</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <h3 className="text-2xl font-bold text-medical-warning">4</h3>
+            <h3 className="text-2xl font-bold text-medical-warning">{stats.pending}</h3>
             <p className="text-sm text-muted-foreground">Pending</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <h3 className="text-2xl font-bold text-destructive">2</h3>
+            <h3 className="text-2xl font-bold text-destructive">{stats.cancelled}</h3>
             <p className="text-sm text-muted-foreground">Cancelled</p>
           </CardContent>
         </Card>

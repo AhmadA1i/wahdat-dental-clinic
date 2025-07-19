@@ -14,7 +14,161 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      appointments: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          patient_id: string | null
+          patient_name: string
+          phone: string | null
+          preferred_date: string | null
+          preferred_time: string | null
+          status: string | null
+          treatment_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string | null
+          patient_name: string
+          phone?: string | null
+          preferred_date?: string | null
+          preferred_time?: string | null
+          status?: string | null
+          treatment_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string | null
+          patient_name?: string
+          phone?: string | null
+          preferred_date?: string | null
+          preferred_time?: string | null
+          status?: string | null
+          treatment_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          message: string | null
+          name: string
+          phone: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          message?: string | null
+          name: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          message?: string | null
+          name?: string
+          phone?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      patients: {
+        Row: {
+          age: number | null
+          appointment_date: string | null
+          appointment_time: string | null
+          created_at: string
+          duration: string | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          price: number | null
+          treatment_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          age?: number | null
+          appointment_date?: string | null
+          appointment_time?: string | null
+          created_at?: string
+          duration?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          price?: number | null
+          treatment_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          age?: number | null
+          appointment_date?: string | null
+          appointment_time?: string | null
+          created_at?: string
+          duration?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          price?: number | null
+          treatment_name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          name: string | null
+          role: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string | null
+          role?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string | null
+          role?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
