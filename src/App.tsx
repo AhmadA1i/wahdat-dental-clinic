@@ -10,6 +10,7 @@ import Records from "./pages/Records";
 import Appointments from "./pages/Appointments";
 import CalendarView from "./pages/CalendarView";
 import Treatments from "./pages/Treatments";
+import Doctors from "./pages/Doctors";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,10 +25,11 @@ const App = () => (
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="patients" element={<Patients />} />
-            <Route path="records" element={<Records />} />
             <Route path="appointments" element={<Appointments />} />
-            <Route path="calendar" element={<CalendarView />} />
+            <Route path="doctors" element={<Doctors />} />
             <Route path="treatments" element={<Treatments />} />
+            <Route path="calendar" element={<CalendarView />} />
+            <Route path="records" element={<Records />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

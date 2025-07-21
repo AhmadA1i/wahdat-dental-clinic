@@ -225,129 +225,155 @@ const Dashboard = () => {
   };
 
   const dentalTeam = [
-    { name: "Dr. Emily Johnson", role: "Chief Dentist", specialty: "Orthodontics", status: "Available" },
-    { name: "Dr. Michael Smith", role: "Oral Surgeon", specialty: "Surgery", status: "In Surgery" },
-    { name: "Dr. Sarah Brown", role: "Periodontist", specialty: "Gum Disease", status: "Available" },
-    { name: "Lisa Davis", role: "Dental Hygienist", specialty: "Cleaning", status: "With Patient" }
+    { name: "Dr. Ahmad Al-Rashid", role: "General Dentist", specialty: "General Dentist", status: "Available", initials: "AA" },
+    { name: "Dr. Fatima Hassan", role: "Orthodontist", specialty: "Orthodontist", status: "Available", initials: "FH" },
+    { name: "Dr. Omar Khalil", role: "Oral Surgeon", specialty: "Oral Surgeon", status: "With Patient", initials: "OK" }
   ];
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-foreground">Dashboard Overview</h1>
         <p className="text-muted-foreground">Welcome back! Here's what's happening at your clinic today.</p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {stats.map((stat, index) => (
-          <StatsCard key={index} {...stat} />
-        ))}
+        <Card className="shadow-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Total Patients</p>
+                <p className="text-3xl font-bold text-foreground">{stats[0].value}</p>
+                <p className="text-sm text-wahdat-green flex items-center mt-1">
+                  <span className="mr-1">↗</span>
+                  12% from last month
+                </p>
+              </div>
+              <div className="h-12 w-12 bg-wahdat-green-light rounded-lg flex items-center justify-center">
+                <Users className="h-6 w-6 text-wahdat-green" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Today's Appointments</p>
+                <p className="text-3xl font-bold text-foreground">{stats[1].value}</p>
+                <p className="text-sm text-wahdat-green">Next: 2:30 PM</p>
+              </div>
+              <div className="h-12 w-12 bg-wahdat-green-light rounded-lg flex items-center justify-center">
+                <Calendar className="h-6 w-6 text-wahdat-green" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-card">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Active Doctors</p>
+                <p className="text-3xl font-bold text-foreground">2</p>
+                <p className="text-sm text-wahdat-green">All available today</p>
+              </div>
+              <div className="h-12 w-12 bg-wahdat-green-light rounded-lg flex items-center justify-center">
+                <UserCheck className="h-6 w-6 text-wahdat-green" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pending Appointment Requests */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Clock className="h-5 w-5 text-primary" />
-              <span>Pending Appointment Requests</span>
-              <Badge variant="secondary" className="ml-auto">
-                {pendingAppointments.length}
-              </Badge>
-            </CardTitle>
+        <Card className="shadow-card">
+          <CardHeader className="border-b border-border pb-4">
+            <div className="flex items-center justify-between">
+              <CardTitle>Pending Appointment Requests</CardTitle>
+              <Button variant="ghost" size="sm" className="text-wahdat-green hover:text-wahdat-green-dark">
+                View All →
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {pendingAppointments.length > 0 ? (
-                pendingAppointments.map((appointment: any) => (
-                  <div key={appointment.id} className="border rounded-lg p-4 space-y-3">
-                    <div className="flex justify-between items-start">
+          <CardContent className="p-0">
+            <div className="overflow-hidden">
+              <div className="px-6 py-3 bg-muted/30 border-b border-border">
+                <div className="grid grid-cols-4 gap-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <div>PATIENT</div>
+                  <div>PREFERRED DATE</div>
+                  <div>SERVICE</div>
+                  <div>ACTIONS</div>
+                </div>
+              </div>
+              <div className="p-6">
+                {pendingAppointments.length > 0 ? (
+                  pendingAppointments.map((appointment: any) => (
+                    <div key={appointment.id} className="grid grid-cols-4 gap-4 items-center py-4 border-b border-border/50 last:border-0">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-10 w-10 bg-wahdat-green-light rounded-full flex items-center justify-center text-wahdat-green font-medium text-sm">
+                          KH
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">{appointment.patient_name}</p>
+                          <p className="text-sm text-muted-foreground">{appointment.phone}</p>
+                        </div>
+                      </div>
                       <div>
-                        <h4 className="font-medium">{appointment.patient_name}</h4>
-                        <p className="text-sm text-muted-foreground">{appointment.treatment_name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {appointment.preferred_date} at {appointment.preferred_time}
-                        </p>
-                        <p className="text-sm text-muted-foreground flex items-center">
-                          <Phone className="h-3 w-3 mr-1" />
-                          {appointment.phone}
-                        </p>
+                        <p className="text-foreground">{appointment.preferred_date}</p>
+                      </div>
+                      <div>
+                        <Badge className="bg-blue-100 text-blue-800">
+                          {appointment.treatment_name || 'Cleaning'}
+                        </Badge>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button variant="ghost" size="sm" onClick={() => handleApprove(appointment.id)} className="text-green-600 hover:text-green-700">
+                          <Check className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleReject(appointment.id)} className="text-red-600 hover:text-red-700">
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <Button variant="success" size="sm" onClick={() => handleApprove(appointment.id)}>
-                        <Check className="h-4 w-4 mr-1" />
-                        Approve
-                      </Button>
-                      <Button variant="destructive" size="sm" onClick={() => handleReject(appointment.id)}>
-                        <X className="h-4 w-4 mr-1" />
-                        Reject
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-1" />
-                        Details
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-center text-muted-foreground py-4">No pending appointments</p>
-              )}
+                  ))
+                ) : (
+                  <p className="text-center text-muted-foreground py-8">No contact messages found</p>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Recent Contact Messages */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Mail className="h-5 w-5 text-primary" />
-              <span>Recent Contact Messages</span>
-            </CardTitle>
+        <Card className="shadow-card">
+          <CardHeader className="border-b border-border pb-4">
+            <div className="flex items-center justify-between">
+              <CardTitle>Recent Contact Messages</CardTitle>
+              <Button variant="ghost" size="sm" className="text-wahdat-green hover:text-wahdat-green-dark">
+                View All →
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {messages.length > 0 ? (
-                messages.map((message: any) => (
-                  <div key={message.id} className="border rounded-lg p-4 space-y-2">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <h4 className="font-medium">{message.name}</h4>
-                          <Badge variant={message.status === 'unread' ? 'destructive' : 'secondary'}>
-                            {message.status}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{message.email}</p>
-                        <p className="text-sm text-muted-foreground">{message.phone}</p>
-                        <p className="text-sm">{message.message}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(message.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">View</Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => handleMarkAsRead(message.id)}
-                        disabled={message.status === 'read'}
-                      >
-                        Mark Read
-                      </Button>
-                      <Button variant="destructive" size="sm" onClick={() => handleDeleteMessage(message.id)}>
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-center text-muted-foreground py-4">No messages</p>
-              )}
+          <CardContent className="p-0">
+            <div className="overflow-hidden">
+              <div className="px-6 py-3 bg-muted/30 border-b border-border">
+                <div className="grid grid-cols-4 gap-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <div>NAME</div>
+                  <div>CONTACT</div>
+                  <div>DATE</div>
+                  <div>STATUS</div>
+                  <div>ACTIONS</div>
+                </div>
+              </div>
+              <div className="p-6">
+                <p className="text-center text-muted-foreground py-8">No contact messages found</p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -356,19 +382,33 @@ const Dashboard = () => {
       {/* Bottom Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Dental Team */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Dental Team</CardTitle>
+        <Card className="shadow-card">
+          <CardHeader className="border-b border-border pb-4">
+            <div className="flex items-center justify-between">
+              <CardTitle>Dental Team</CardTitle>
+              <Button variant="ghost" size="sm" className="text-wahdat-green hover:text-wahdat-green-dark">
+                View All →
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+          <CardContent className="p-6">
+            <div className="space-y-4">
               {dentalTeam.map((member, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div>
-                    <h4 className="font-medium">{member.name}</h4>
-                    <p className="text-sm text-muted-foreground">{member.role} • {member.specialty}</p>
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="h-10 w-10 bg-wahdat-green-light rounded-full flex items-center justify-center text-wahdat-green font-medium text-sm">
+                      {member.initials}
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">{member.name}</p>
+                      <p className="text-sm text-muted-foreground">{member.specialty}</p>
+                    </div>
                   </div>
-                  <Badge variant={member.status === 'Available' ? 'default' : 'secondary'}>
+                  <Badge className={
+                    member.status === 'Available' 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-yellow-100 text-yellow-800'
+                  }>
                     {member.status}
                   </Badge>
                 </div>
@@ -378,27 +418,32 @@ const Dashboard = () => {
         </Card>
 
         {/* Today's Appointments */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Today's Schedule</CardTitle>
+        <Card className="shadow-card">
+          <CardHeader className="border-b border-border pb-4">
+            <div className="flex items-center justify-between">
+              <CardTitle>Today's Appointments</CardTitle>
+              <Button variant="ghost" size="sm" className="text-wahdat-green hover:text-wahdat-green-dark">
+                View Calendar →
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+          <CardContent className="p-6">
+            <div className="space-y-4">
               {todayAppointments.length > 0 ? (
                 todayAppointments.map((appointment: any) => (
-                  <div key={appointment.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div key={appointment.id} className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">{appointment.preferred_time}</p>
+                      <p className="font-medium text-foreground">{appointment.preferred_time}</p>
                       <p className="text-sm text-muted-foreground">{appointment.patient_name}</p>
+                      <p className="text-sm text-muted-foreground">{appointment.treatment_name}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium">{appointment.treatment_name}</p>
-                      <p className="text-sm text-muted-foreground">Status: {appointment.status}</p>
-                    </div>
+                    <Badge className="bg-blue-100 text-blue-800">
+                      {appointment.status}
+                    </Badge>
                   </div>
                 ))
               ) : (
-                <p className="text-center text-muted-foreground py-4">No appointments scheduled for today</p>
+                <p className="text-center text-muted-foreground py-8">No appointments today</p>
               )}
             </div>
           </CardContent>

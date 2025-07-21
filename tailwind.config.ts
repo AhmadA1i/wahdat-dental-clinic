@@ -59,6 +59,20 @@ export default {
 					warning: 'hsl(var(--medical-warning))',
 					info: 'hsl(var(--medical-info))'
 				},
+				wahdat: {
+					green: 'hsl(var(--wahdat-green))',
+					'green-light': 'hsl(var(--wahdat-green-light))',
+					'green-dark': 'hsl(var(--wahdat-green-dark))',
+					text: 'hsl(var(--wahdat-text))',
+					'text-light': 'hsl(var(--wahdat-text-light))'
+				},
+				status: {
+					available: 'hsl(var(--status-available))',
+					busy: 'hsl(var(--status-busy))',
+					scheduled: 'hsl(var(--status-scheduled))',
+					completed: 'hsl(var(--status-completed))',
+					cancelled: 'hsl(var(--status-cancelled))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',

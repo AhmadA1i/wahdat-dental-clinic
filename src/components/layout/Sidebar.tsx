@@ -3,17 +3,14 @@ import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
-  FileText, 
   Calendar, 
   CalendarDays,
   ClipboardList,
+  UserCheck,
   LogOut,
-  User,
-  Menu,
-  X
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import clinicLogo from '@/assets/clinic-logo.png';
 
 interface SidebarProps {
   user?: {
@@ -28,74 +25,53 @@ const Sidebar = ({ user = { name: "Dr. Johnson", role: "Administrator" } }: Side
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Patients', href: '/patients', icon: Users },
-    { name: 'Patient Records', href: '/records', icon: FileText },
     { name: 'Appointments', href: '/appointments', icon: Calendar },
-    { name: 'Calendar', href: '/calendar', icon: CalendarDays },
+    { name: 'Doctors', href: '/doctors', icon: UserCheck },
     { name: 'Treatment Plans', href: '/treatments', icon: ClipboardList },
+    { name: 'Calendar', href: '/calendar', icon: CalendarDays },
   ];
 
   return (
     <div className={`
-      ${isCollapsed ? 'w-20' : 'w-72'} 
-      bg-gradient-to-b from-medical-primary to-medical-primary/90 
+      ${isCollapsed ? 'w-20' : 'w-80'} 
+      bg-wahdat-green
       text-white transition-all duration-300 ease-in-out
-      flex flex-col min-h-screen
+      flex flex-col min-h-screen shadow-lg
     `}>
       {/* Header */}
-      <div className="p-6 border-b border-white/10">
+      <div className="p-6">
         <div className="flex items-center justify-between">
           {!isCollapsed && (
             <div className="flex items-center space-x-3">
-              <img src={clinicLogo} alt="Clinic Logo" className="h-10 w-10 rounded-lg" />
+              <div className="h-10 w-10 bg-white rounded-lg flex items-center justify-center">
+                <Check className="h-6 w-6 text-wahdat-green" />
+              </div>
               <div>
-                <h1 className="text-lg font-bold">DentalCare</h1>
-                <p className="text-xs text-white/80">Management System</p>
+                <h1 className="text-xl font-bold">Wahdat Dental</h1>
+                <p className="text-sm text-white/90">Clinic Center</p>
               </div>
             </div>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="text-white hover:bg-white/10"
-          >
-            {isCollapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
-          </Button>
         </div>
       </div>
 
-      {/* User Info */}
-      {!isCollapsed && (
-        <div className="p-6 border-b border-white/10">
-          <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 bg-white/20 rounded-full flex items-center justify-center">
-              <User className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="font-medium">Welcome, {user.name}</p>
-              <p className="text-sm text-white/80">{user.role}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Navigation */}
-      <nav className="flex-1 p-4">
-        <ul className="space-y-2">
+      <nav className="flex-1 px-4">
+        <ul className="space-y-1">
           {navigation.map((item) => (
             <li key={item.name}>
               <NavLink
                 to={item.href}
                 className={({ isActive }) =>
-                  `flex items-center px-4 py-3 rounded-lg transition-colors duration-200 ${
+                  `flex items-center px-4 py-4 rounded-lg transition-all duration-200 group ${
                     isActive
-                      ? 'bg-white/20 text-white font-medium'
-                      : 'text-white/80 hover:bg-white/10 hover:text-white'
+                      ? 'bg-white/20 text-white font-medium border-l-4 border-white'
+                      : 'text-white/90 hover:bg-white/10 hover:text-white'
                   }`
                 }
               >
-                <item.icon className={`h-5 w-5 ${isCollapsed ? 'mx-auto' : 'mr-3'}`} />
-                {!isCollapsed && <span>{item.name}</span>}
+                <item.icon className={`h-5 w-5 ${isCollapsed ? 'mx-auto' : 'mr-4'}`} />
+                {!isCollapsed && <span className="font-medium">{item.name}</span>}
               </NavLink>
             </li>
           ))}
@@ -103,10 +79,10 @@ const Sidebar = ({ user = { name: "Dr. Johnson", role: "Administrator" } }: Side
       </nav>
 
       {/* Logout */}
-      <div className="p-4 border-t border-white/10">
-        <button className="flex items-center w-full px-4 py-3 text-white/80 hover:bg-white/10 hover:text-white rounded-lg transition-colors duration-200">
-          <LogOut className={`h-5 w-5 ${isCollapsed ? 'mx-auto' : 'mr-3'}`} />
-          {!isCollapsed && <span>Logout</span>}
+      <div className="p-4">
+        <button className="flex items-center w-full px-4 py-4 text-white/90 hover:bg-white/10 hover:text-white rounded-lg transition-all duration-200 group">
+          <LogOut className={`h-5 w-5 ${isCollapsed ? 'mx-auto' : 'mr-4'}`} />
+          {!isCollapsed && <span className="font-medium">Logout</span>}
         </button>
       </div>
     </div>
