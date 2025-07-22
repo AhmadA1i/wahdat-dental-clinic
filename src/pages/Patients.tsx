@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Search, Plus, Edit, Trash2, Filter } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Filter, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
+import { AddPatientForm } from '@/components/forms/AddPatientForm';
+import { AddTreatmentPlanForm } from '@/components/forms/AddTreatmentPlanForm';
 
 interface Patient {
   id: string;
@@ -18,6 +21,19 @@ interface Patient {
   appointment_date?: string;
   appointment_time?: string;
   created_at: string;
+  doctor_id?: string;
+  doctors?: { name: string; specialty: string };
+  treatment_plans?: Array<{
+    id: string;
+    treatment_name: string;
+    status: string;
+    total_cost: number;
+  }>;
+  appointments?: Array<{
+    id: string;
+    preferred_date: string;
+    status: string;
+  }>;
 }
 
 const Patients = () => {
@@ -26,52 +42,24 @@ const Patients = () => {
   const [filterMonth, setFilterMonth] = useState('all');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Mock data that matches the design from the image
-  const mockPatients: Patient[] = [
-    {
-      id: '1',
-      name: 'Sarah Ahmed',
-      email: 'sarah.ahmed@email.com',
-      phone: '+971-55-111-2233',
-      age: 32,
-      created_at: '2025-07-21T00:00:00Z',
-      treatment_name: 'General Checkup',
-      price: 150,
-      appointment_date: '1990-05-15',
-      appointment_time: '10:00'
-    },
-    {
-      id: '2', 
-      name: 'Mohammed Ali',
-      email: 'mohammed.ali@email.com',
-      phone: '+971-55-222-3344',
-      age: 28,
-      created_at: '2025-07-21T00:00:00Z',
-      treatment_name: 'Cleaning',
-      price: 200,
-      appointment_date: '1985-12-20',
-      appointment_time: '14:00'
-    },
-    {
-      id: '3',
-      name: 'Aisha Abdullah', 
-      email: 'aisha.abdullah@email.com',
-      phone: '+971-55-333-4455',
-      age: 35,
-      created_at: '2025-07-21T00:00:00Z',
-      treatment_name: 'Root Canal',
-      price: 500,
-      appointment_date: '1995-08-10',
-      appointment_time: '16:30'
-    }
-  ];
+  const [showAddPatient, setShowAddPatient] = useState(false);
+  const [showAddTreatment, setShowAddTreatment] = useState(false);
+  const [selectedPatientId, setSelectedPatientId] = useState<string>('');
 
   const fetchPatients = async () => {
     try {
-      // Use mock data for now since we're focused on UI matching
-      setPatients(mockPatients);
-      setLoading(false);
+      const { data, error } = await supabase
+        .from('patients')
+        .select(`
+          *,
+          doctors:doctor_id (name, specialty),
+          treatment_plans (id, treatment_name, status, total_cost),
+          appointments (id, preferred_date, status)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPatients(data || []);
     } catch (error) {
       console.error('Error fetching patients:', error);
       toast({
@@ -79,6 +67,7 @@ const Patients = () => {
         description: "Failed to load patients",
         variant: "destructive",
       });
+    } finally {
       setLoading(false);
     }
   };
@@ -89,12 +78,20 @@ const Patients = () => {
 
   const handleDeletePatient = async (id: string) => {
     try {
-      setPatients(prev => prev.filter(patient => patient.id !== id));
+      const { error } = await supabase
+        .from('patients')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
       toast({
         title: "Success",
         description: "Patient deleted successfully",
       });
+      fetchPatients();
     } catch (error) {
+      console.error('Error deleting patient:', error);
       toast({
         title: "Error", 
         description: "Failed to delete patient",
@@ -103,16 +100,27 @@ const Patients = () => {
     }
   };
 
+  const handleAddTreatmentPlan = (patientId: string) => {
+    setSelectedPatientId(patientId);
+    setShowAddTreatment(true);
+  };
+
   const getPatientInitials = (name: string) => {
     const names = name.split(' ');
     return names.map(n => n.charAt(0)).join('').toUpperCase().slice(0, 2);
   };
 
-  const filteredPatients = patients.filter(patient =>
-    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.phone.includes(searchTerm)
-  );
+  const filteredPatients = patients.filter(patient => {
+    const matchesSearch = patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.phone.includes(searchTerm) ||
+      patient.id.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesMonth = filterMonth === 'all' || 
+      new Date(patient.created_at).getMonth() === parseInt(filterMonth);
+    
+    return matchesSearch && matchesMonth;
+  });
 
   if (loading) {
     return (
@@ -133,7 +141,11 @@ const Patients = () => {
           <h1 className="text-3xl font-bold text-foreground">Patient Management</h1>
           <p className="text-muted-foreground">Manage and track all patient records</p>
         </div>
-        <Button variant="medical" className="bg-wahdat-green hover:bg-wahdat-green-dark">
+        <Button 
+          variant="medical" 
+          className="bg-wahdat-green hover:bg-wahdat-green-dark"
+          onClick={() => setShowAddPatient(true)}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Add Patient
         </Button>
@@ -161,9 +173,18 @@ const Patients = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Months</SelectItem>
-                <SelectItem value="january">January</SelectItem>
-                <SelectItem value="february">February</SelectItem>
-                <SelectItem value="march">March</SelectItem>
+                <SelectItem value="0">January</SelectItem>
+                <SelectItem value="1">February</SelectItem>
+                <SelectItem value="2">March</SelectItem>
+                <SelectItem value="3">April</SelectItem>
+                <SelectItem value="4">May</SelectItem>
+                <SelectItem value="5">June</SelectItem>
+                <SelectItem value="6">July</SelectItem>
+                <SelectItem value="7">August</SelectItem>
+                <SelectItem value="8">September</SelectItem>
+                <SelectItem value="9">October</SelectItem>
+                <SelectItem value="10">November</SelectItem>
+                <SelectItem value="11">December</SelectItem>
               </SelectContent>
             </Select>
             <Button variant="outline">
@@ -179,9 +200,9 @@ const Patients = () => {
                 <tr className="border-b border-border">
                   <th className="text-left py-4 px-2 font-medium text-muted-foreground text-sm">PATIENT</th>
                   <th className="text-left py-4 px-2 font-medium text-muted-foreground text-sm">CONTACT</th>
-                  <th className="text-left py-4 px-2 font-medium text-muted-foreground text-sm">DATE OF BIRTH</th>
-                  <th className="text-left py-4 px-2 font-medium text-muted-foreground text-sm">BALANCE</th>
-                  <th className="text-left py-4 px-2 font-medium text-muted-foreground text-sm">CREATED</th>
+                  <th className="text-left py-4 px-2 font-medium text-muted-foreground text-sm">ASSIGNED DOCTOR</th>
+                  <th className="text-left py-4 px-2 font-medium text-muted-foreground text-sm">TREATMENT PLANS</th>
+                  <th className="text-left py-4 px-2 font-medium text-muted-foreground text-sm">APPOINTMENTS</th>
                   <th className="text-left py-4 px-2 font-medium text-muted-foreground text-sm">ACTIONS</th>
                 </tr>
               </thead>
@@ -195,7 +216,7 @@ const Patients = () => {
                         </div>
                         <div>
                           <p className="font-medium text-foreground">{patient.name}</p>
-                          <p className="text-sm text-muted-foreground">ID: {patient.id}</p>
+                          <p className="text-sm text-muted-foreground">ID: {patient.id.slice(0, 8)}</p>
                         </div>
                       </div>
                     </td>
@@ -206,18 +227,66 @@ const Patients = () => {
                       </div>
                     </td>
                     <td className="py-4 px-2">
-                      <span className="text-foreground">{patient.appointment_date}</span>
-                    </td>
-                    <td className="py-4 px-2">
-                      <span className="text-foreground">$0.00</span>
-                    </td>
-                    <td className="py-4 px-2">
                       <span className="text-foreground">
-                        {new Date(patient.created_at).toLocaleDateString()}
+                        {patient.doctors ? 
+                          `${patient.doctors.name} (${patient.doctors.specialty})` : 
+                          "Not assigned"
+                        }
                       </span>
                     </td>
                     <td className="py-4 px-2">
+                      {patient.treatment_plans && patient.treatment_plans.length > 0 ? (
+                        <div className="space-y-1">
+                          {patient.treatment_plans.slice(0, 2).map((plan) => (
+                            <div key={plan.id} className="text-sm">
+                              <Badge variant={plan.status === 'active' ? 'default' : 'secondary'}>
+                                {plan.treatment_name} - ${plan.total_cost}
+                              </Badge>
+                            </div>
+                          ))}
+                          {patient.treatment_plans.length > 2 && (
+                            <div className="text-xs text-muted-foreground">
+                              +{patient.treatment_plans.length - 2} more
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">No treatment plans</span>
+                      )}
+                    </td>
+                    <td className="py-4 px-2">
+                      {patient.appointments && patient.appointments.length > 0 ? (
+                        <div className="space-y-1">
+                          {patient.appointments.slice(0, 2).map((appointment) => (
+                            <div key={appointment.id} className="text-sm">
+                              <Badge variant={appointment.status === 'confirmed' ? 'default' : 'secondary'}>
+                                {appointment.preferred_date} - {appointment.status}
+                              </Badge>
+                            </div>
+                          ))}
+                          {patient.appointments.length > 2 && (
+                            <div className="text-xs text-muted-foreground">
+                              +{patient.appointments.length - 2} more
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">No appointments</span>
+                      )}
+                    </td>
+                    <td className="py-4 px-2">
                       <div className="flex space-x-2">
+                        <Button variant="ghost" size="sm" className="text-wahdat-green hover:text-wahdat-green-dark hover:bg-wahdat-green-light">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleAddTreatmentPlan(patient.id)}
+                          className="text-wahdat-green hover:text-wahdat-green-dark hover:bg-wahdat-green-light"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
                         <Button variant="ghost" size="sm" className="text-wahdat-green hover:text-wahdat-green-dark hover:bg-wahdat-green-light">
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -244,6 +313,19 @@ const Patients = () => {
           </div>
         </CardContent>
       </Card>
+
+      <AddPatientForm 
+        open={showAddPatient}
+        onOpenChange={setShowAddPatient}
+        onPatientAdded={fetchPatients}
+      />
+
+      <AddTreatmentPlanForm
+        open={showAddTreatment}
+        onOpenChange={setShowAddTreatment}
+        onTreatmentPlanAdded={fetchPatients}
+        selectedPatientId={selectedPatientId}
+      />
     </div>
   );
 };

@@ -3,9 +3,10 @@ import Calendar from 'react-calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Clock, User, CalendarDays } from 'lucide-react';
+import { Clock, User, CalendarDays, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
+import { AddAppointmentForm } from '@/components/forms/AddAppointmentForm';
 import 'react-calendar/dist/Calendar.css';
 
 interface CalendarAppointment {
@@ -15,6 +16,7 @@ interface CalendarAppointment {
   preferred_time: string;
   status: string;
   preferred_date: string;
+  doctors?: { name: string; specialty: string };
 }
 
 const CalendarView = () => {
@@ -22,6 +24,7 @@ const CalendarView = () => {
   const [date, setDate] = useState(new Date());
   const [appointments, setAppointments] = useState<{ [key: string]: CalendarAppointment[] }>({});
   const [loading, setLoading] = useState(true);
+  const [showAddAppointment, setShowAddAppointment] = useState(false);
   const [stats, setStats] = useState({
     thisWeek: 0,
     confirmed: 0,
@@ -33,7 +36,10 @@ const CalendarView = () => {
     try {
       const { data, error } = await supabase
         .from('appointments')
-        .select('*')
+        .select(`
+          *,
+          doctors:doctor_id (name, specialty)
+        `)
         .order('preferred_time');
 
       if (error) throw error;
@@ -65,7 +71,7 @@ const CalendarView = () => {
         }
 
         switch (appointment.status) {
-          case 'approved':
+          case 'confirmed':
           case 'completed':
             confirmedCount++;
             break;
@@ -73,7 +79,6 @@ const CalendarView = () => {
             pendingCount++;
             break;
           case 'cancelled':
-          case 'rejected':
             cancelledCount++;
             break;
         }
@@ -111,11 +116,10 @@ const CalendarView = () => {
 
   const getStatusColor = (status: string) => {
     const colors = {
-      approved: 'bg-green-100 text-green-800',
+      confirmed: 'bg-green-100 text-green-800',
       pending: 'bg-yellow-100 text-yellow-800',
       completed: 'bg-blue-100 text-blue-800',
       cancelled: 'bg-red-100 text-red-800',
-      rejected: 'bg-red-100 text-red-800'
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
@@ -126,8 +130,15 @@ const CalendarView = () => {
       const dayAppts = appointments[dateKey];
       if (dayAppts && dayAppts.length > 0) {
         return (
-          <div className="flex justify-center">
-            <div className="h-2 w-2 bg-primary rounded-full"></div>
+          <div className="flex justify-center mt-1">
+            <div className="flex space-x-1">
+              {dayAppts.slice(0, 3).map((_, index) => (
+                <div key={index} className="h-1.5 w-1.5 bg-wahdat-green rounded-full"></div>
+              ))}
+              {dayAppts.length > 3 && (
+                <div className="h-1.5 w-1.5 bg-wahdat-green-dark rounded-full"></div>
+              )}
+            </div>
           </div>
         );
       }
@@ -149,9 +160,18 @@ const CalendarView = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Calendar</h1>
-        <p className="text-muted-foreground">View and manage appointments in calendar format</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Calendar</h1>
+          <p className="text-muted-foreground">View and manage appointments in calendar format</p>
+        </div>
+        <Button 
+          variant="medical"
+          onClick={() => setShowAddAppointment(true)}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Schedule Appointment
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -170,7 +190,7 @@ const CalendarView = () => {
                   onChange={(value) => setDate(value as Date)}
                   value={date}
                   tileContent={tileContent}
-                  className="mx-auto border-none"
+                  className="mx-auto border-none w-full"
                 />
               </div>
             </CardContent>
@@ -195,6 +215,11 @@ const CalendarView = () => {
                         <div>
                           <h4 className="font-medium">{appointment.patient_name}</h4>
                           <p className="text-sm text-muted-foreground">{appointment.treatment_name}</p>
+                          {appointment.doctors && (
+                            <p className="text-xs text-muted-foreground">
+                              Dr. {appointment.doctors.name}
+                            </p>
+                          )}
                         </div>
                         <Badge className={getStatusColor(appointment.status)}>
                           {appointment.status}
@@ -206,7 +231,11 @@ const CalendarView = () => {
                       </div>
                     </div>
                   ))}
-                  <Button variant="medical" className="w-full">
+                  <Button 
+                    variant="medical" 
+                    className="w-full"
+                    onClick={() => setShowAddAppointment(true)}
+                  >
                     Add Appointment
                   </Button>
                 </div>
@@ -214,7 +243,12 @@ const CalendarView = () => {
                 <div className="text-center py-8">
                   <CalendarDays className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
                   <p className="text-muted-foreground mb-4">No appointments scheduled</p>
-                  <Button variant="medical">Schedule Appointment</Button>
+                  <Button 
+                    variant="medical"
+                    onClick={() => setShowAddAppointment(true)}
+                  >
+                    Schedule Appointment
+                  </Button>
                 </div>
               )}
             </CardContent>
@@ -232,13 +266,13 @@ const CalendarView = () => {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <h3 className="text-2xl font-bold text-medical-success">{stats.confirmed}</h3>
+            <h3 className="text-2xl font-bold text-wahdat-green">{stats.confirmed}</h3>
             <p className="text-sm text-muted-foreground">Confirmed</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <h3 className="text-2xl font-bold text-medical-warning">{stats.pending}</h3>
+            <h3 className="text-2xl font-bold text-yellow-600">{stats.pending}</h3>
             <p className="text-sm text-muted-foreground">Pending</p>
           </CardContent>
         </Card>
@@ -249,6 +283,12 @@ const CalendarView = () => {
           </CardContent>
         </Card>
       </div>
+
+      <AddAppointmentForm 
+        open={showAddAppointment}
+        onOpenChange={setShowAddAppointment}
+        onAppointmentAdded={fetchAppointments}
+      />
     </div>
   );
 };

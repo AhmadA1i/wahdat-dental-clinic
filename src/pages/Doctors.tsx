@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
+import { AddDoctorForm } from '@/components/forms/AddDoctorForm';
 
 interface Doctor {
   id: string;
@@ -12,7 +13,7 @@ interface Doctor {
   specialty: string;
   email: string;
   phone: string;
-  status: 'available' | 'busy' | 'offline';
+  status: string;
   created_at: string;
 }
 
@@ -20,52 +21,64 @@ const Doctors = () => {
   const { toast } = useToast();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAddDoctor, setShowAddDoctor] = useState(false);
 
-  // Mock data for the UI since we don't have doctors table yet
-  const mockDoctors: Doctor[] = [
-    {
-      id: '1',
-      name: 'Dr. Ahmad Al-Rashid',
-      specialty: 'General Dentist',
-      email: 'ahmad.rashid@wahdat.com',
-      phone: '+971-50-123-4567',
-      status: 'available',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: '2',
-      name: 'Dr. Fatima Hassan',
-      specialty: 'Orthodontist',
-      email: 'fatima.hassan@wahdat.com',
-      phone: '+971-50-234-5678',
-      status: 'available',
-      created_at: new Date().toISOString()
-    },
-    {
-      id: '3',
-      name: 'Dr. Omar Khalil',
-      specialty: 'Oral Surgeon',
-      email: 'omar.khalil@wahdat.com',
-      phone: '+971-50-345-6789',
-      status: 'busy',
-      created_at: new Date().toISOString()
+  const fetchDoctors = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('doctors')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setDoctors(data || []);
+    } catch (error) {
+      console.error('Error fetching doctors:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load doctors",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   useEffect(() => {
-    // Use mock data for now
-    setDoctors(mockDoctors);
-    setLoading(false);
+    fetchDoctors();
   }, []);
+
+  const handleDeleteDoctor = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('doctors')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Doctor deleted successfully",
+      });
+      fetchDoctors();
+    } catch (error) {
+      console.error('Error deleting doctor:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete doctor",
+        variant: "destructive",
+      });
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      available: { class: 'bg-green-100 text-green-800', text: 'Available' },
-      busy: { class: 'bg-yellow-100 text-yellow-800', text: 'With Patient' },
-      offline: { class: 'bg-gray-100 text-gray-800', text: 'Offline' }
+      active: { class: 'bg-green-100 text-green-800', text: 'Active' },
+      inactive: { class: 'bg-gray-100 text-gray-800', text: 'Inactive' }
     };
     
-    const config = statusConfig[status as keyof typeof statusConfig];
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.active;
     return (
       <Badge className={config.class}>
         {config.text}
@@ -97,7 +110,11 @@ const Doctors = () => {
           <h1 className="text-3xl font-bold text-foreground">Doctor Management</h1>
           <p className="text-muted-foreground">Manage and track medical staff</p>
         </div>
-        <Button variant="medical" className="bg-wahdat-green hover:bg-wahdat-green-dark">
+        <Button 
+          variant="medical" 
+          className="bg-wahdat-green hover:bg-wahdat-green-dark"
+          onClick={() => setShowAddDoctor(true)}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Add Doctor
         </Button>
@@ -133,7 +150,7 @@ const Doctors = () => {
                         </div>
                         <div>
                           <p className="font-medium text-foreground">{doctor.name}</p>
-                          <p className="text-sm text-muted-foreground">ID: {doctor.id}</p>
+                          <p className="text-sm text-muted-foreground">ID: {doctor.id.slice(0, 8)}</p>
                         </div>
                       </div>
                     </td>
@@ -160,7 +177,12 @@ const Doctors = () => {
                         <Button variant="ghost" size="sm" className="text-wahdat-green hover:text-wahdat-green-dark hover:bg-wahdat-green-light">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 hover:bg-red-50">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleDeleteDoctor(doctor.id)}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -169,9 +191,22 @@ const Doctors = () => {
                 ))}
               </tbody>
             </table>
+            
+            {doctors.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                <UserCheck className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No doctors found</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
+
+      <AddDoctorForm 
+        open={showAddDoctor}
+        onOpenChange={setShowAddDoctor}
+        onDoctorAdded={fetchDoctors}
+      />
     </div>
   );
 };

@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, Filter, Check, X, Eye } from 'lucide-react';
+import { Calendar, Clock, Filter, Check, X, Eye, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
+import { AddAppointmentForm } from '@/components/forms/AddAppointmentForm';
 
 interface Appointment {
   id: string;
@@ -17,6 +19,8 @@ interface Appointment {
   status: string;
   notes?: string;
   created_at: string;
+  doctor_id?: string;
+  doctors?: { name: string; specialty: string };
 }
 
 const Appointments = () => {
@@ -24,12 +28,17 @@ const Appointments = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAddAppointment, setShowAddAppointment] = useState(false);
+  const [filterMonth, setFilterMonth] = useState('all');
 
   const fetchAppointments = async () => {
     try {
       const { data, error } = await supabase
         .from('appointments')
-        .select('*')
+        .select(`
+          *,
+          doctors:doctor_id (name, specialty)
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -54,20 +63,20 @@ const Appointments = () => {
     try {
       const { error } = await supabase
         .from('appointments')
-        .update({ status: 'approved' })
+        .update({ status: 'confirmed' })
         .eq('id', id);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Appointment approved successfully",
+        description: "Appointment confirmed successfully",
       });
       fetchAppointments();
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to approve appointment",
+        description: "Failed to confirm appointment",
         variant: "destructive",
       });
     }
@@ -77,52 +86,53 @@ const Appointments = () => {
     try {
       const { error } = await supabase
         .from('appointments')
-        .update({ status: 'rejected' })
+        .update({ status: 'cancelled' })
         .eq('id', id);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Appointment rejected",
+        description: "Appointment cancelled",
       });
       fetchAppointments();
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to reject appointment",
+        description: "Failed to cancel appointment",
         variant: "destructive",
       });
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const variants = {
-      approved: 'default',
-      pending: 'warning',
-      rejected: 'destructive',
-      completed: 'default',
-      cancelled: 'destructive',
-      upcoming: 'default'
-    };
     const colors = {
-      approved: 'bg-green-100 text-green-800',
+      confirmed: 'bg-green-100 text-green-800',
       pending: 'bg-yellow-100 text-yellow-800',
-      rejected: 'bg-red-100 text-red-800',
+      cancelled: 'bg-red-100 text-red-800',
       completed: 'bg-blue-100 text-blue-800',
-      cancelled: 'bg-gray-100 text-gray-800',
-      upcoming: 'bg-blue-100 text-blue-800'
     };
     return (
-      <Badge className={colors[status as keyof typeof colors]}>
+      <Badge className={colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'}>
         {status}
       </Badge>
     );
   };
 
   const filterAppointments = (status: string) => {
-    if (status === 'all') return appointments;
-    return appointments.filter(apt => apt.status === status);
+    let filtered = appointments;
+    
+    if (status !== 'all') {
+      filtered = filtered.filter(apt => apt.status === status);
+    }
+    
+    if (filterMonth !== 'all') {
+      filtered = filtered.filter(apt => 
+        new Date(apt.preferred_date).getMonth() === parseInt(filterMonth)
+      );
+    }
+    
+    return filtered;
   };
 
   const getTabCount = (status: string) => {
@@ -148,7 +158,10 @@ const Appointments = () => {
           <h1 className="text-3xl font-bold text-foreground">Appointments</h1>
           <p className="text-muted-foreground">Manage and track all patient appointments</p>
         </div>
-        <Button variant="medical">
+        <Button 
+          variant="medical"
+          onClick={() => setShowAddAppointment(true)}
+        >
           <Calendar className="h-4 w-4 mr-2" />
           Schedule New
         </Button>
@@ -160,15 +173,36 @@ const Appointments = () => {
           <TabsList>
             <TabsTrigger value="all">All ({getTabCount('all')})</TabsTrigger>
             <TabsTrigger value="pending">Pending ({getTabCount('pending')})</TabsTrigger>
-            <TabsTrigger value="approved">Approved ({getTabCount('approved')})</TabsTrigger>
+            <TabsTrigger value="confirmed">Confirmed ({getTabCount('confirmed')})</TabsTrigger>
             <TabsTrigger value="completed">Completed ({getTabCount('completed')})</TabsTrigger>
             <TabsTrigger value="cancelled">Cancelled ({getTabCount('cancelled')})</TabsTrigger>
-            <TabsTrigger value="rejected">Rejected ({getTabCount('rejected')})</TabsTrigger>
           </TabsList>
-          <Button variant="outline">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
+          <div className="flex gap-2">
+            <Select value={filterMonth} onValueChange={setFilterMonth}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="All Months" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Months</SelectItem>
+                <SelectItem value="0">January</SelectItem>
+                <SelectItem value="1">February</SelectItem>
+                <SelectItem value="2">March</SelectItem>
+                <SelectItem value="3">April</SelectItem>
+                <SelectItem value="4">May</SelectItem>
+                <SelectItem value="5">June</SelectItem>
+                <SelectItem value="6">July</SelectItem>
+                <SelectItem value="7">August</SelectItem>
+                <SelectItem value="8">September</SelectItem>
+                <SelectItem value="9">October</SelectItem>
+                <SelectItem value="10">November</SelectItem>
+                <SelectItem value="11">December</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline">
+              <Filter className="h-4 w-4 mr-2" />
+              Filter
+            </Button>
+          </div>
         </div>
 
         <TabsContent value={activeTab}>
@@ -209,8 +243,13 @@ const Appointments = () => {
                             </p>
                           </div>
                           <div>
-                            <p className="font-medium text-foreground">Created</p>
-                            <p>{new Date(appointment.created_at).toLocaleDateString()}</p>
+                            <p className="font-medium text-foreground">Doctor</p>
+                            <p>
+                              {appointment.doctors ? 
+                                `${appointment.doctors.name}` : 
+                                'Not assigned'
+                              }
+                            </p>
                           </div>
                         </div>
                         {appointment.notes && (
@@ -225,11 +264,11 @@ const Appointments = () => {
                           <>
                             <Button variant="success" size="sm" onClick={() => handleApprove(appointment.id)}>
                               <Check className="h-4 w-4 mr-1" />
-                              Approve
+                              Confirm
                             </Button>
                             <Button variant="destructive" size="sm" onClick={() => handleReject(appointment.id)}>
                               <X className="h-4 w-4 mr-1" />
-                              Reject
+                              Cancel
                             </Button>
                           </>
                         )}
@@ -252,6 +291,12 @@ const Appointments = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <AddAppointmentForm 
+        open={showAddAppointment}
+        onOpenChange={setShowAddAppointment}
+        onAppointmentAdded={fetchAppointments}
+      />
     </div>
   );
 };

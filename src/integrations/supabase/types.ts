@@ -17,6 +17,7 @@ export type Database = {
       appointments: {
         Row: {
           created_at: string
+          doctor_id: string | null
           id: string
           notes: string | null
           patient_id: string | null
@@ -30,6 +31,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          doctor_id?: string | null
           id?: string
           notes?: string | null
           patient_id?: string | null
@@ -43,6 +45,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          doctor_id?: string | null
           id?: string
           notes?: string | null
           patient_id?: string | null
@@ -56,6 +59,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "appointments_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "appointments_patient_id_fkey"
             columns: ["patient_id"]
             isOneToOne: false
@@ -63,6 +73,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      doctors: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          specialty: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          specialty: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          specialty?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       messages: {
         Row: {
@@ -103,6 +146,7 @@ export type Database = {
           appointment_date: string | null
           appointment_time: string | null
           created_at: string
+          doctor_id: string | null
           duration: string | null
           email: string | null
           id: string
@@ -117,6 +161,7 @@ export type Database = {
           appointment_date?: string | null
           appointment_time?: string | null
           created_at?: string
+          doctor_id?: string | null
           duration?: string | null
           email?: string | null
           id?: string
@@ -131,6 +176,7 @@ export type Database = {
           appointment_date?: string | null
           appointment_time?: string | null
           created_at?: string
+          doctor_id?: string | null
           duration?: string | null
           email?: string | null
           id?: string
@@ -140,7 +186,15 @@ export type Database = {
           treatment_name?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "patients_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -168,6 +222,66 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      treatment_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          doctor_id: string
+          duration: string
+          end_date: string | null
+          id: string
+          patient_id: string
+          start_date: string | null
+          status: string | null
+          total_cost: number
+          treatment_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          doctor_id: string
+          duration: string
+          end_date?: string | null
+          id?: string
+          patient_id: string
+          start_date?: string | null
+          status?: string | null
+          total_cost: number
+          treatment_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          doctor_id?: string
+          duration?: string
+          end_date?: string | null
+          id?: string
+          patient_id?: string
+          start_date?: string | null
+          status?: string | null
+          total_cost?: number
+          treatment_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treatment_plans_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "treatment_plans_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
