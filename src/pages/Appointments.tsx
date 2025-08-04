@@ -57,6 +57,9 @@ const Appointments = () => {
 
   useEffect(() => {
     fetchAppointments();
+    // Set default filter to current month (August = 7)
+    const currentMonth = new Date().getMonth();
+    setFilterMonth(currentMonth.toString());
   }, []);
 
   const handleApprove = async (id: string) => {
@@ -262,11 +265,21 @@ const Appointments = () => {
                       <div className="flex space-x-2 ml-4">
                         {appointment.status === 'pending' && (
                           <>
-                            <Button variant="success" size="sm" onClick={() => handleApprove(appointment.id)}>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleApprove(appointment.id)}
+                              className="bg-green-50 text-green-700 hover:bg-green-100 border-green-200"
+                            >
                               <Check className="h-4 w-4 mr-1" />
                               Confirm
                             </Button>
-                            <Button variant="destructive" size="sm" onClick={() => handleReject(appointment.id)}>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleReject(appointment.id)}
+                              className="bg-red-50 text-red-700 hover:bg-red-100 border-red-200"
+                            >
                               <X className="h-4 w-4 mr-1" />
                               Cancel
                             </Button>

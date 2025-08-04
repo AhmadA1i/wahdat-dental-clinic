@@ -9,6 +9,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AddPatientForm } from '@/components/forms/AddPatientForm';
 import { AddTreatmentPlanForm } from '@/components/forms/AddTreatmentPlanForm';
+import { ViewPatientDialog } from '@/components/dialogs/ViewPatientDialog';
+import { EditPatientForm } from '@/components/forms/EditPatientForm';
 
 interface Patient {
   id: string;
@@ -32,7 +34,9 @@ interface Patient {
   appointments?: Array<{
     id: string;
     preferred_date: string;
+    preferred_time: string;
     status: string;
+    treatment_name: string;
   }>;
 }
 
@@ -44,7 +48,10 @@ const Patients = () => {
   const [loading, setLoading] = useState(true);
   const [showAddPatient, setShowAddPatient] = useState(false);
   const [showAddTreatment, setShowAddTreatment] = useState(false);
+  const [showViewPatient, setShowViewPatient] = useState(false);
+  const [showEditPatient, setShowEditPatient] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState<string>('');
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
 
   const fetchPatients = async () => {
     try {
@@ -54,7 +61,7 @@ const Patients = () => {
           *,
           doctors:doctor_id (name, specialty),
           treatment_plans (id, treatment_name, status, total_cost),
-          appointments (id, preferred_date, status)
+          appointments (id, preferred_date, preferred_time, status, treatment_name)
         `)
         .order('created_at', { ascending: false });
 
@@ -103,6 +110,16 @@ const Patients = () => {
   const handleAddTreatmentPlan = (patientId: string) => {
     setSelectedPatientId(patientId);
     setShowAddTreatment(true);
+  };
+
+  const handleViewPatient = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setShowViewPatient(true);
+  };
+
+  const handleEditPatient = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setShowEditPatient(true);
   };
 
   const getPatientInitials = (name: string) => {
@@ -276,7 +293,13 @@ const Patients = () => {
                     </td>
                     <td className="py-4 px-2">
                       <div className="flex space-x-2">
-                        <Button variant="ghost" size="sm" className="text-wahdat-green hover:text-wahdat-green-dark hover:bg-wahdat-green-light">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleViewPatient(patient)}
+                          className="text-wahdat-green hover:text-wahdat-green-dark hover:bg-wahdat-green-light"
+                          title="View Patient Details"
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button 
@@ -284,10 +307,17 @@ const Patients = () => {
                           size="sm" 
                           onClick={() => handleAddTreatmentPlan(patient.id)}
                           className="text-wahdat-green hover:text-wahdat-green-dark hover:bg-wahdat-green-light"
+                          title="Add Treatment Plan"
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-wahdat-green hover:text-wahdat-green-dark hover:bg-wahdat-green-light">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleEditPatient(patient)}
+                          className="text-wahdat-green hover:text-wahdat-green-dark hover:bg-wahdat-green-light"
+                          title="Edit Patient"
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button 
@@ -295,6 +325,7 @@ const Patients = () => {
                           size="sm" 
                           onClick={() => handleDeletePatient(patient.id)}
                           className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          title="Delete Patient"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -325,6 +356,19 @@ const Patients = () => {
         onOpenChange={setShowAddTreatment}
         onTreatmentPlanAdded={fetchPatients}
         selectedPatientId={selectedPatientId}
+      />
+
+      <ViewPatientDialog
+        open={showViewPatient}
+        onOpenChange={setShowViewPatient}
+        patient={selectedPatient}
+      />
+
+      <EditPatientForm
+        open={showEditPatient}
+        onOpenChange={setShowEditPatient}
+        patient={selectedPatient}
+        onPatientUpdated={fetchPatients}
       />
     </div>
   );

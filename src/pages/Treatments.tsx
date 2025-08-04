@@ -1,64 +1,87 @@
+import { useState, useEffect } from 'react';
 import { ClipboardList, Plus, Edit, Trash2, Clock, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { AddTreatmentPlanForm } from '@/components/forms/AddTreatmentPlanForm';
+
+interface TreatmentPlan {
+  id: string;
+  treatment_name: string;
+  description?: string;
+  duration: string;
+  total_cost: number;
+  status: string;
+  start_date?: string;
+  end_date?: string;
+  created_at: string;
+  patient_id: string;
+  doctor_id: string;
+  patients?: { name: string };
+  doctors?: { name: string; specialty: string };
+}
 
 const Treatments = () => {
-  const treatmentPlans = [
-    {
-      id: 1,
-      patientName: "Sarah Johnson",
-      planName: "Complete Dental Restoration",
-      startDate: "2024-01-15",
-      endDate: "2024-04-15",
-      progress: 65,
-      status: "in-progress",
-      totalCost: 2500,
-      paidAmount: 1500,
-      treatments: [
-        { name: "Initial Consultation", status: "completed", cost: 150 },
-        { name: "Teeth Cleaning", status: "completed", cost: 120 },
-        { name: "Filling (3 teeth)", status: "completed", cost: 450 },
-        { name: "Crown Installation", status: "in-progress", cost: 800 },
-        { name: "Final Checkup", status: "scheduled", cost: 100 }
-      ]
-    },
-    {
-      id: 2,
-      patientName: "Michael Brown",
-      planName: "Root Canal Treatment",
-      startDate: "2024-01-10",
-      endDate: "2024-02-10",
-      progress: 80,
-      status: "in-progress",
-      totalCost: 1200,
-      paidAmount: 800,
-      treatments: [
-        { name: "X-Ray & Diagnosis", status: "completed", cost: 100 },
-        { name: "Root Canal Procedure", status: "completed", cost: 600 },
-        { name: "Temporary Crown", status: "completed", cost: 200 },
-        { name: "Permanent Crown", status: "scheduled", cost: 300 }
-      ]
-    },
-    {
-      id: 3,
-      patientName: "Emma Davis",
-      planName: "Orthodontic Treatment",
-      startDate: "2024-01-05",
-      endDate: "2025-01-05",
-      progress: 25,
-      status: "in-progress",
-      totalCost: 4500,
-      paidAmount: 1500,
-      treatments: [
-        { name: "Initial Assessment", status: "completed", cost: 200 },
-        { name: "Braces Installation", status: "completed", cost: 1500 },
-        { name: "Monthly Adjustments", status: "in-progress", cost: 2400 },
-        { name: "Retainer Fitting", status: "scheduled", cost: 400 }
-      ]
+  const { toast } = useToast();
+  const [treatmentPlans, setTreatmentPlans] = useState<TreatmentPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddTreatment, setShowAddTreatment] = useState(false);
+
+  const fetchTreatmentPlans = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('treatment_plans')
+        .select(`
+          *,
+          patients:patient_id (name),
+          doctors:doctor_id (name, specialty)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setTreatmentPlans(data || []);
+    } catch (error) {
+      console.error('Error fetching treatment plans:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load treatment plans",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  useEffect(() => {
+    fetchTreatmentPlans();
+  }, []);
+
+  const handleDeleteTreatmentPlan = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('treatment_plans')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Treatment plan deleted successfully",
+      });
+      fetchTreatmentPlans();
+    } catch (error) {
+      console.error('Error deleting treatment plan:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete treatment plan",
+        variant: "destructive",
+      });
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -79,6 +102,17 @@ const Treatments = () => {
     return <Badge variant={variants[status as keyof typeof variants] as any}>{status.replace('-', ' ')}</Badge>;
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading treatment plans...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -87,7 +121,10 @@ const Treatments = () => {
           <h1 className="text-3xl font-bold text-foreground">Treatment Plans</h1>
           <p className="text-muted-foreground">Manage comprehensive treatment plans and track progress</p>
         </div>
-        <Button variant="medical">
+        <Button 
+          variant="medical"
+          onClick={() => setShowAddTreatment(true)}
+        >
           <Plus className="h-4 w-4 mr-2" />
           Create New Plan
         </Button>
@@ -102,17 +139,27 @@ const Treatments = () => {
                 <div>
                   <CardTitle className="flex items-center space-x-2">
                     <ClipboardList className="h-5 w-5 text-primary" />
-                    <span>{plan.planName}</span>
+                    <span>{plan.treatment_name}</span>
                     {getStatusBadge(plan.status)}
                   </CardTitle>
-                  <p className="text-muted-foreground mt-1">Patient: {plan.patientName}</p>
+                  <p className="text-muted-foreground mt-1">
+                    Patient: {plan.patients?.name || 'Unknown'}
+                  </p>
+                  <p className="text-muted-foreground text-sm">
+                    Doctor: {plan.doctors?.name || 'Not assigned'} 
+                    {plan.doctors?.specialty && ` (${plan.doctors.specialty})`}
+                  </p>
                 </div>
                 <div className="flex space-x-2">
                   <Button variant="outline" size="sm">
                     <Edit className="h-3 w-3 mr-1" />
                     Edit
                   </Button>
-                  <Button variant="destructive" size="sm">
+                  <Button 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={() => handleDeleteTreatmentPlan(plan.id)}
+                  >
                     <Trash2 className="h-3 w-3 mr-1" />
                     Delete
                   </Button>
@@ -120,57 +167,43 @@ const Treatments = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Progress and Overview */}
+              {/* Overview */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                  <h4 className="font-medium mb-2">Treatment Progress</h4>
-                  <Progress value={plan.progress} className="mb-2" />
-                  <p className="text-sm text-muted-foreground">{plan.progress}% Complete</p>
-                </div>
-                <div>
                   <h4 className="font-medium mb-2">Duration</h4>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Clock className="h-3 w-3 mr-1" />
-                    {plan.startDate} - {plan.endDate}
+                  <div className="text-sm text-muted-foreground">
+                    <div className="flex items-center">
+                      <Clock className="h-3 w-3 mr-1" />
+                      {plan.duration}
+                    </div>
+                    {plan.start_date && plan.end_date && (
+                      <div className="mt-1">
+                        {new Date(plan.start_date).toLocaleDateString()} - {new Date(plan.end_date).toLocaleDateString()}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-medium mb-2">Financial</h4>
-                  <div className="space-y-1">
-                    <div className="flex items-center text-sm">
-                      <DollarSign className="h-3 w-3 mr-1" />
-                      Total: ${plan.totalCost}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Paid: ${plan.paidAmount} ({Math.round((plan.paidAmount / plan.totalCost) * 100)}%)
-                    </div>
+                  <h4 className="font-medium mb-2">Cost</h4>
+                  <div className="flex items-center text-sm">
+                    <DollarSign className="h-3 w-3 mr-1" />
+                    ${plan.total_cost.toLocaleString()}
                   </div>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Description</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {plan.description || 'No description provided'}
+                  </p>
                 </div>
               </div>
 
-              {/* Treatment Steps */}
+              {/* Created Date */}
               <div>
-                <h4 className="font-medium mb-4">Treatment Steps</h4>
-                <div className="space-y-3">
-                  {plan.treatments.map((treatment, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                          treatment.status === 'completed' ? 'bg-green-100 text-green-800' :
-                          treatment.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {index + 1}
-                        </div>
-                        <div>
-                          <p className="font-medium">{treatment.name}</p>
-                          <p className="text-sm text-muted-foreground">${treatment.cost}</p>
-                        </div>
-                      </div>
-                      {getTreatmentStatusBadge(treatment.status)}
-                    </div>
-                  ))}
-                </div>
+                <h4 className="font-medium mb-2">Created</h4>
+                <p className="text-sm text-muted-foreground">
+                  {new Date(plan.created_at).toLocaleDateString()}
+                </p>
               </div>
 
               {/* Action Buttons */}
@@ -185,38 +218,36 @@ const Treatments = () => {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
             <h3 className="text-2xl font-bold text-primary">{treatmentPlans.length}</h3>
-            <p className="text-sm text-muted-foreground">Active Plans</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <h3 className="text-2xl font-bold text-medical-success">
-              {Math.round(treatmentPlans.reduce((acc, plan) => acc + plan.progress, 0) / treatmentPlans.length)}%
-            </h3>
-            <p className="text-sm text-muted-foreground">Avg. Progress</p>
+            <p className="text-sm text-muted-foreground">Total Plans</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <h3 className="text-2xl font-bold text-foreground">
-              ${treatmentPlans.reduce((acc, plan) => acc + plan.totalCost, 0).toLocaleString()}
+              ${treatmentPlans.reduce((acc, plan) => acc + plan.total_cost, 0).toLocaleString()}
             </h3>
             <p className="text-sm text-muted-foreground">Total Value</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <h3 className="text-2xl font-bold text-medical-warning">
-              ${treatmentPlans.reduce((acc, plan) => acc + (plan.totalCost - plan.paidAmount), 0).toLocaleString()}
+            <h3 className="text-2xl font-bold text-green-600">
+              {treatmentPlans.filter(plan => plan.status === 'active').length}
             </h3>
-            <p className="text-sm text-muted-foreground">Outstanding</p>
+            <p className="text-sm text-muted-foreground">Active Plans</p>
           </CardContent>
         </Card>
       </div>
+
+      <AddTreatmentPlanForm
+        open={showAddTreatment}
+        onOpenChange={setShowAddTreatment}
+        onTreatmentPlanAdded={fetchTreatmentPlans}
+      />
     </div>
   );
 };

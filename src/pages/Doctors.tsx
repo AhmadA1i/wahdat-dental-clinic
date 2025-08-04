@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AddDoctorForm } from '@/components/forms/AddDoctorForm';
+import { EditDoctorForm } from '@/components/forms/EditDoctorForm';
 
 interface Doctor {
   id: string;
@@ -22,6 +23,8 @@ const Doctors = () => {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddDoctor, setShowAddDoctor] = useState(false);
+  const [showEditDoctor, setShowEditDoctor] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
 
   const fetchDoctors = async () => {
     try {
@@ -70,6 +73,11 @@ const Doctors = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleEditDoctor = (doctor: Doctor) => {
+    setSelectedDoctor(doctor);
+    setShowEditDoctor(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -174,7 +182,12 @@ const Doctors = () => {
                     </td>
                     <td className="py-4 px-2">
                       <div className="flex space-x-2">
-                        <Button variant="ghost" size="sm" className="text-wahdat-green hover:text-wahdat-green-dark hover:bg-wahdat-green-light">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleEditDoctor(doctor)}
+                          className="text-wahdat-green hover:text-wahdat-green-dark hover:bg-wahdat-green-light"
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                         <Button 
@@ -206,6 +219,13 @@ const Doctors = () => {
         open={showAddDoctor}
         onOpenChange={setShowAddDoctor}
         onDoctorAdded={fetchDoctors}
+      />
+
+      <EditDoctorForm
+        open={showEditDoctor}
+        onOpenChange={setShowEditDoctor}
+        doctor={selectedDoctor}
+        onDoctorUpdated={fetchDoctors}
       />
     </div>
   );
