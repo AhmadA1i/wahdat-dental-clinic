@@ -11,6 +11,7 @@ import { AddPatientForm } from '@/components/forms/AddPatientForm';
 import { AddTreatmentPlanForm } from '@/components/forms/AddTreatmentPlanForm';
 import { ViewPatientDialog } from '@/components/dialogs/ViewPatientDialog';
 import { EditPatientForm } from '@/components/forms/EditPatientForm';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface Patient {
   id: string;
@@ -52,6 +53,8 @@ const Patients = () => {
   const [showEditPatient, setShowEditPatient] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState<string>('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [patientToDelete, setPatientToDelete] = useState<string>('');
 
   const fetchPatients = async () => {
     try {
@@ -83,16 +86,12 @@ const Patients = () => {
     fetchPatients();
   }, []);
 
-  const handleDeletePatient = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this patient? This action cannot be undone.')) {
-      return;
-    }
-    
+  const handleDeletePatient = async () => {
     try {
       const { error } = await supabase
         .from('patients')
         .delete()
-        .eq('id', id);
+        .eq('id', patientToDelete);
 
       if (error) throw error;
 
@@ -101,6 +100,8 @@ const Patients = () => {
         description: "Patient deleted successfully",
       });
       fetchPatients();
+      setShowDeleteConfirm(false);
+      setPatientToDelete('');
     } catch (error) {
       console.error('Error deleting patient:', error);
       toast({
@@ -109,6 +110,11 @@ const Patients = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const confirmDeletePatient = (id: string) => {
+    setPatientToDelete(id);
+    setShowDeleteConfirm(true);
   };
 
   const handleAddTreatmentPlan = (patientId: string) => {
@@ -147,7 +153,7 @@ const Patients = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <div className="loading-spinner h-8 w-8 mx-auto"></div>
           <p className="mt-2 text-muted-foreground">Loading patients...</p>
         </div>
       </div>
@@ -327,7 +333,7 @@ const Patients = () => {
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          onClick={() => handleDeletePatient(patient.id)}
+                          onClick={() => confirmDeletePatient(patient.id)}
                           className="text-red-500 hover:text-red-700 hover:bg-red-50"
                           title="Delete Patient"
                         >
@@ -373,6 +379,16 @@ const Patients = () => {
         onOpenChange={setShowEditPatient}
         patient={selectedPatient}
         onPatientUpdated={fetchPatients}
+      />
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete Patient"
+        description="Are you sure you want to delete this patient? This action cannot be undone and will remove all associated records."
+        confirmText="Delete"
+        onConfirm={handleDeletePatient}
+        variant="destructive"
       />
     </div>
   );
