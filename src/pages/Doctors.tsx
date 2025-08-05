@@ -52,6 +52,10 @@ const Doctors = () => {
   }, []);
 
   const handleDeleteDoctor = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this doctor?')) {
+      return;
+    }
+    
     try {
       const { error } = await supabase
         .from('doctors')

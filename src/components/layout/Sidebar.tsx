@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
@@ -21,6 +21,7 @@ interface SidebarProps {
 
 const Sidebar = ({ user = { name: "Dr. Johnson", role: "Administrator" } }: SidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const navigate = useNavigate();
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -42,7 +43,10 @@ const Sidebar = ({ user = { name: "Dr. Johnson", role: "Administrator" } }: Side
       <div className="p-6">
         <div className="flex items-center justify-between">
           {!isCollapsed && (
-            <div className="flex items-center space-x-3">
+            <div 
+              className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => navigate('/')}
+            >
               <div className="h-10 w-10 bg-white rounded-lg flex items-center justify-center">
                 <Check className="h-6 w-6 text-wahdat-green" />
               </div>

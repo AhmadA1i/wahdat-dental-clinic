@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import StatsCard from '@/components/ui/StatsCard';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const Dashboard = () => {
   const { toast } = useToast();
@@ -296,7 +296,12 @@ const Dashboard = () => {
           <CardHeader className="border-b border-border pb-4">
             <div className="flex items-center justify-between">
               <CardTitle>Pending Appointment Requests</CardTitle>
-              <Button variant="ghost" size="sm" className="text-wahdat-green hover:text-wahdat-green-dark">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-wahdat-green hover:text-wahdat-green-dark"
+                onClick={() => window.location.href = '/appointments'}
+              >
                 View All →
               </Button>
             </div>
@@ -355,7 +360,12 @@ const Dashboard = () => {
           <CardHeader className="border-b border-border pb-4">
             <div className="flex items-center justify-between">
               <CardTitle>Recent Contact Messages</CardTitle>
-              <Button variant="ghost" size="sm" className="text-wahdat-green hover:text-wahdat-green-dark">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-wahdat-green hover:text-wahdat-green-dark"
+                onClick={() => window.location.href = '/'}
+              >
                 View All →
               </Button>
             </div>
@@ -386,7 +396,12 @@ const Dashboard = () => {
           <CardHeader className="border-b border-border pb-4">
             <div className="flex items-center justify-between">
               <CardTitle>Dental Team</CardTitle>
-              <Button variant="ghost" size="sm" className="text-wahdat-green hover:text-wahdat-green-dark">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-wahdat-green hover:text-wahdat-green-dark"
+                onClick={() => window.location.href = '/doctors'}
+              >
                 View All →
               </Button>
             </div>
@@ -422,7 +437,12 @@ const Dashboard = () => {
           <CardHeader className="border-b border-border pb-4">
             <div className="flex items-center justify-between">
               <CardTitle>Today's Appointments</CardTitle>
-              <Button variant="ghost" size="sm" className="text-wahdat-green hover:text-wahdat-green-dark">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-wahdat-green hover:text-wahdat-green-dark"
+                onClick={() => window.location.href = '/calendar'}
+              >
                 View Calendar →
               </Button>
             </div>
