@@ -6,9 +6,11 @@ import StatsCard from '@/components/ui/StatsCard';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [pendingAppointments, setPendingAppointments] = useState([]);
   const [messages, setMessages] = useState([]);
   const [stats, setStats] = useState([
@@ -300,7 +302,7 @@ const Dashboard = () => {
                 variant="ghost" 
                 size="sm" 
                 className="text-wahdat-green hover:text-wahdat-green-dark"
-                onClick={() => window.location.href = '/appointments'}
+                onClick={() => navigate('/appointments')}
               >
                 View All →
               </Button>
@@ -364,7 +366,7 @@ const Dashboard = () => {
                 variant="ghost" 
                 size="sm" 
                 className="text-wahdat-green hover:text-wahdat-green-dark"
-                onClick={() => window.location.href = '/'}
+                onClick={() => navigate('/')}
               >
                 View All →
               </Button>
@@ -400,7 +402,7 @@ const Dashboard = () => {
                 variant="ghost" 
                 size="sm" 
                 className="text-wahdat-green hover:text-wahdat-green-dark"
-                onClick={() => window.location.href = '/doctors'}
+                onClick={() => navigate('/doctors')}
               >
                 View All →
               </Button>
@@ -441,7 +443,7 @@ const Dashboard = () => {
                 variant="ghost" 
                 size="sm" 
                 className="text-wahdat-green hover:text-wahdat-green-dark"
-                onClick={() => window.location.href = '/calendar'}
+                onClick={() => navigate('/calendar')}
               >
                 View Calendar →
               </Button>
