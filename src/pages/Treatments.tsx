@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AddTreatmentPlanForm } from '@/components/forms/AddTreatmentPlanForm';
+import { EditTreatmentPlanForm } from '@/components/forms/EditTreatmentPlanForm';
 
 interface TreatmentPlan {
   id: string;
@@ -29,6 +30,8 @@ const Treatments = () => {
   const [treatmentPlans, setTreatmentPlans] = useState<TreatmentPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddTreatment, setShowAddTreatment] = useState(false);
+  const [showEditTreatment, setShowEditTreatment] = useState(false);
+  const [selectedTreatmentPlan, setSelectedTreatmentPlan] = useState<TreatmentPlan | null>(null);
 
   const fetchTreatmentPlans = async () => {
     try {
@@ -151,7 +154,14 @@ const Treatments = () => {
                   </p>
                 </div>
                 <div className="flex space-x-2">
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setSelectedTreatmentPlan(plan);
+                      setShowEditTreatment(true);
+                    }}
+                  >
                     <Edit className="h-3 w-3 mr-1" />
                     Edit
                   </Button>
@@ -247,6 +257,13 @@ const Treatments = () => {
         open={showAddTreatment}
         onOpenChange={setShowAddTreatment}
         onTreatmentPlanAdded={fetchTreatmentPlans}
+      />
+
+      <EditTreatmentPlanForm
+        open={showEditTreatment}
+        onOpenChange={setShowEditTreatment}
+        treatmentPlan={selectedTreatmentPlan}
+        onTreatmentPlanUpdated={fetchTreatmentPlans}
       />
     </div>
   );

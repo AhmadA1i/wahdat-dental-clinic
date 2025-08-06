@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AddAppointmentForm } from '@/components/forms/AddAppointmentForm';
+import { ViewAppointmentDialog } from '@/components/dialogs/ViewAppointmentDialog';
 
 interface Appointment {
   id: string;
@@ -29,6 +30,8 @@ const Appointments = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddAppointment, setShowAddAppointment] = useState(false);
+  const [showViewAppointment, setShowViewAppointment] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [filterMonth, setFilterMonth] = useState('all');
 
   const fetchAppointments = async () => {
@@ -285,7 +288,14 @@ const Appointments = () => {
                             </Button>
                           </>
                         )}
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            setSelectedAppointment(appointment);
+                            setShowViewAppointment(true);
+                          }}
+                        >
                           <Eye className="h-4 w-4 mr-1" />
                           View
                         </Button>
@@ -309,6 +319,12 @@ const Appointments = () => {
         open={showAddAppointment}
         onOpenChange={setShowAddAppointment}
         onAppointmentAdded={fetchAppointments}
+      />
+
+      <ViewAppointmentDialog
+        open={showViewAppointment}
+        onOpenChange={setShowViewAppointment}
+        appointment={selectedAppointment}
       />
     </div>
   );
