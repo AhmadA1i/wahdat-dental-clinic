@@ -8,20 +8,19 @@ import {
   ClipboardList,
   UserCheck,
   LogOut,
-  Check
+  Check,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
-interface SidebarProps {
-  user?: {
-    name: string;
-    role: string;
-  };
-}
 
-const Sidebar = ({ user = { name: "Dr. Johnson", role: "Administrator" } }: SidebarProps) => {
+const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
+  const { profile, signOut, isAdmin } = useAuth();
+  const { toast } = useToast();
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -82,9 +81,31 @@ const Sidebar = ({ user = { name: "Dr. Johnson", role: "Administrator" } }: Side
         </ul>
       </nav>
 
+      {/* User Info */}
+      {!isCollapsed && profile && (
+        <div className="px-4 py-2 border-t border-white/20">
+          <div className="flex items-center space-x-2 text-sm text-white/90">
+            <User className="h-4 w-4" />
+            <div>
+              <p className="font-medium text-white">{profile.name}</p>
+              <p className="text-xs text-white/70 capitalize">{profile.role}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Logout */}
       <div className="p-4">
-        <button className="flex items-center w-full px-4 py-4 text-white/90 hover:bg-white/10 hover:text-white rounded-lg transition-all duration-200 group">
+        <button 
+          className="flex items-center w-full px-4 py-4 text-white/90 hover:bg-white/10 hover:text-white rounded-lg transition-all duration-200 group"
+          onClick={async () => {
+            await signOut();
+            toast({
+              title: "Signed out successfully",
+              description: "You have been logged out.",
+            });
+          }}
+        >
           <LogOut className={`h-5 w-5 ${isCollapsed ? 'mx-auto' : 'mr-4'}`} />
           {!isCollapsed && <span className="font-medium">Logout</span>}
         </button>
