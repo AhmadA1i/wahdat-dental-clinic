@@ -33,6 +33,7 @@ const Appointments = () => {
   const [showViewAppointment, setShowViewAppointment] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [filterMonth, setFilterMonth] = useState('all');
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const fetchAppointments = async () => {
     try {
@@ -66,6 +67,7 @@ const Appointments = () => {
   }, []);
 
   const handleApprove = async (id: string) => {
+    setUpdatingId(id);
     try {
       const { error } = await supabase
         .from('appointments')
@@ -78,17 +80,21 @@ const Appointments = () => {
         title: "Success",
         description: "Appointment confirmed successfully",
       });
-      fetchAppointments();
-    } catch (error) {
+      await fetchAppointments();
+    } catch (error: any) {
+      console.error('Confirm appointment failed:', error);
       toast({
         title: "Error",
-        description: "Failed to confirm appointment",
+        description: error?.message || "Failed to confirm appointment",
         variant: "destructive",
       });
+    } finally {
+      setUpdatingId(null);
     }
   };
 
   const handleReject = async (id: string) => {
+    setUpdatingId(id);
     try {
       const { error } = await supabase
         .from('appointments')
@@ -101,13 +107,16 @@ const Appointments = () => {
         title: "Success",
         description: "Appointment cancelled",
       });
-      fetchAppointments();
-    } catch (error) {
+      await fetchAppointments();
+    } catch (error: any) {
+      console.error('Cancel appointment failed:', error);
       toast({
         title: "Error",
-        description: "Failed to cancel appointment",
+        description: error?.message || "Failed to cancel appointment",
         variant: "destructive",
       });
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -272,6 +281,7 @@ const Appointments = () => {
                               variant="outline" 
                               size="sm" 
                               onClick={() => handleApprove(appointment.id)}
+                              disabled={updatingId === appointment.id}
                               className="bg-green-50 text-green-700 hover:bg-green-100 border-green-200"
                             >
                               <Check className="h-4 w-4 mr-1" />
@@ -281,6 +291,7 @@ const Appointments = () => {
                               variant="outline" 
                               size="sm" 
                               onClick={() => handleReject(appointment.id)}
+                              disabled={updatingId === appointment.id}
                               className="bg-red-50 text-red-700 hover:bg-red-100 border-red-200"
                             >
                               <X className="h-4 w-4 mr-1" />

@@ -91,6 +91,23 @@ export function AddTreatmentPlanForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (
+      !formData.patient_id ||
+      !formData.doctor_id ||
+      !formData.treatment_name.trim() ||
+      !formData.duration.trim() ||
+      !formData.total_cost ||
+      isNaN(parseFloat(formData.total_cost))
+    ) {
+      toast({
+        title: "Missing information",
+        description: "Please select patient and doctor, and fill all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -130,11 +147,11 @@ export function AddTreatmentPlanForm({
       });
       onTreatmentPlanAdded();
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error adding treatment plan:", error);
       toast({
         title: "Error",
-        description: "Failed to add treatment plan. Please try again.",
+        description: error?.message || "Failed to add treatment plan. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -305,7 +322,17 @@ export function AddTreatmentPlanForm({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button 
+              type="submit" 
+              disabled={
+                loading ||
+                !formData.patient_id ||
+                !formData.doctor_id ||
+                !formData.treatment_name.trim() ||
+                !formData.duration.trim() ||
+                !formData.total_cost
+              }
+            >
               {loading ? "Adding..." : "Add Treatment Plan"}
             </Button>
           </div>
