@@ -292,7 +292,7 @@ const Dashboard = () => {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {/* Pending Appointment Requests */}
         <Card className="shadow-card">
           <CardHeader className="border-b border-border pb-4">
@@ -357,38 +357,6 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Recent Contact Messages */}
-        <Card className="shadow-card">
-          <CardHeader className="border-b border-border pb-4">
-            <div className="flex items-center justify-between">
-              <CardTitle>Recent Contact Messages</CardTitle>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-wahdat-green hover:text-wahdat-green-dark"
-                onClick={() => navigate('/')}
-              >
-                View All →
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-hidden">
-              <div className="px-6 py-3 bg-muted/30 border-b border-border">
-                <div className="grid grid-cols-4 gap-4 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  <div>NAME</div>
-                  <div>CONTACT</div>
-                  <div>DATE</div>
-                  <div>STATUS</div>
-                  <div>ACTIONS</div>
-                </div>
-              </div>
-              <div className="p-6">
-                <p className="text-center text-muted-foreground py-8">No contact messages found</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Bottom Section */}
