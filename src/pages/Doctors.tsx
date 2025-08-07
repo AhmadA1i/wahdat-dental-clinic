@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AddDoctorForm } from '@/components/forms/AddDoctorForm';
 import { EditDoctorForm } from '@/components/forms/EditDoctorForm';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface Doctor {
   id: string;
@@ -25,6 +26,9 @@ const Doctors = () => {
   const [showAddDoctor, setShowAddDoctor] = useState(false);
   const [showEditDoctor, setShowEditDoctor] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [doctorToDelete, setDoctorToDelete] = useState<string>('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchDoctors = async () => {
     try {
@@ -51,16 +55,24 @@ const Doctors = () => {
     fetchDoctors();
   }, []);
 
-  const handleDeleteDoctor = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this doctor?')) {
-      return;
-    }
-    
+  const confirmDeleteDoctor = (id: string) => {
+    setDoctorToDelete(id);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteDoctor = async () => {
+    if (!doctorToDelete) return;
+    setDeletingId(doctorToDelete);
     try {
+      // Unassign the doctor from related records to satisfy FK constraints
+      await supabase.from('appointments').update({ doctor_id: null }).eq('doctor_id', doctorToDelete);
+      await supabase.from('treatment_plans').update({ doctor_id: null }).eq('doctor_id', doctorToDelete);
+      await supabase.from('patients').update({ doctor_id: null }).eq('doctor_id', doctorToDelete);
+
       const { error } = await supabase
         .from('doctors')
         .delete()
-        .eq('id', id);
+        .eq('id', doctorToDelete);
 
       if (error) throw error;
 
@@ -69,13 +81,17 @@ const Doctors = () => {
         description: "Doctor deleted successfully",
       });
       fetchDoctors();
-    } catch (error) {
+      setShowDeleteConfirm(false);
+      setDoctorToDelete('');
+    } catch (error: any) {
       console.error('Error deleting doctor:', error);
       toast({
         title: "Error",
-        description: "Failed to delete doctor",
+        description: error?.message || "Failed to delete doctor",
         variant: "destructive",
       });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -198,7 +214,8 @@ const Doctors = () => {
                           variant="ghost" 
                           size="sm" 
                           className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => handleDeleteDoctor(doctor.id)}
+                          onClick={() => confirmDeleteDoctor(doctor.id)}
+                          disabled={deletingId === doctor.id}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -230,6 +247,16 @@ const Doctors = () => {
         onOpenChange={setShowEditDoctor}
         doctor={selectedDoctor}
         onDoctorUpdated={fetchDoctors}
+      />
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title="Delete Doctor"
+        description="This will unassign the doctor from all related appointments and records. This action cannot be undone."
+        confirmText="Delete"
+        onConfirm={handleDeleteDoctor}
+        variant="destructive"
       />
     </div>
   );
