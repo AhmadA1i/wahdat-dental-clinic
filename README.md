@@ -1,4 +1,4 @@
-# Wahdat Dental Clinic Management System
+# Dental Clinic Management System
 
 A production-ready dental clinic management system built with React, TypeScript, and Supabase.
 
@@ -98,4 +98,4 @@ Deploy using [Lovable](https://lovable.dev/projects/e758d4ff-253e-402e-980c-0a0c
 
 ---
 
-**Built for Wahdat Dental Clinic** - A complete, production-ready solution for modern dental practice management.
+**Built for Dental Clinic Management System** - A complete, production-ready solution for modern dental practice management.

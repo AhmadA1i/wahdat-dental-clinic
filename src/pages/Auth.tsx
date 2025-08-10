@@ -92,7 +92,7 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-wahdat-green">
-            Wahdat Dental Clinic
+            Dental Clinic Management System
           </CardTitle>
           <CardDescription>
             Access your clinic management system

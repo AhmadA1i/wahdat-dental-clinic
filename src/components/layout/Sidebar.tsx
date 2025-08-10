@@ -50,8 +50,8 @@ const Sidebar = () => {
                 <Check className="h-6 w-6 text-wahdat-green" />
               </div>
               <div>
-                <h1 className="text-xl font-bold">Wahdat Dental</h1>
-                <p className="text-sm text-white/90">Clinic Center</p>
+                <h1 className="text-xl font-bold">Dental Clinic</h1>
+                <p className="text-sm text-white/90">Management System</p>
               </div>
             </div>
           )}
